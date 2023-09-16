@@ -19,7 +19,9 @@ class BookmarkFragment : Fragment() {
 
     // Context와 ViewModel
     private lateinit var mContext: Context
-    private val sharedViewModel: SharedViewModel by activityViewModels()
+
+    val sharedViewModel by activityViewModels<SharedViewModel>()
+
     private val viewModel: BookmarkViewModel by viewModels()
 
     // 바인딩과 어댑터
@@ -61,7 +63,9 @@ class BookmarkFragment : Fragment() {
         adapter.setOnItemClickListener(object : BookmarkAdapter.OnItemClickListener {
             override fun onItemClick(item: SearchItemModel, position: Int) {
                 viewModel.deleteItem(mContext, item, position)
-                sharedViewModel.deleteItem(item.url)
+                Log.d("BookmarkFragment", "#jblee onItemClick deleteItem position = $position")
+                sharedViewModel.addDeletedItemUrls(item.url)
+
             }
         })
 

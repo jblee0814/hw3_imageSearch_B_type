@@ -1,30 +1,61 @@
 package com.jblee.imagesearch.viewmodel.search
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 /**
- * SharedViewModel 클래스는 앱의 여러 프래그먼트나 액티비티 간에 공유된 데이터를 저장하고 관리하는 데 사용됩니다.
- * 예를 들어, 사용자가 이미지를 삭제하면 해당 이미지의 URL이 이 ViewModel에 저장되고, 관련된 모든 뷰가 이 변경을 감지하고 반응할 수 있습니다.
+ * SharedViewModel은 여러 프래그먼트나 액티비티 간에 공유된 데이터를 저장하고 관리하는 데 사용됩니다.
+ * 예: 사용자가 이미지를 삭제할 경우 해당 이미지의 URL이 이 ViewModel에 저장되며,
+ * 이를 구독하고 있는 뷰들은 이 변화를 반영할 수 있습니다.
  */
 class SharedViewModel : ViewModel() {
 
-    // MutableLiveData는 변경 가능한 LiveData입니다.
-    // 이는 내부적으로 데이터를 변경할 수 있지만, 외부에서는 읽기 전용인 LiveData로 접근됩니다.
-    private val _deletedItemUrl = MutableLiveData<String>()
-
-    // deletedItemUrl은 _deletedItemUrl의 불변 버전입니다.
-    // 이를 통해 다른 클래스에서는 데이터를 읽을 수는 있지만 수정할 수는 없습니다.
-    val deletedItemUrl: LiveData<String> get() = _deletedItemUrl
+    private val _deletedItemUrls = MutableLiveData<Event<List<String>>>()
+    val deletedItemUrls: LiveData<Event<List<String>>> get() = _deletedItemUrls
 
     /**
-     * deleteItem 함수는 사용자가 이미지를 삭제할 때 호출됩니다.
+     * 사용자가 이미지를 삭제할 때 호출되는 함수입니다.
      * @param url 삭제된 이미지의 URL
      */
-    fun deleteItem(url: String) {
-        // 삭제된 아이템의 URL을 _deletedItemUrl에 설정합니다.
-        // 관찰자(예: 프래그먼트나 액티비티)는 이 변경을 감지하고 적절한 조치를 취할 수 있습니다.
-        _deletedItemUrl.value = url
+    fun addDeletedItemUrls(url: String) {
+        val currentList = _deletedItemUrls.value?.peekContent() ?: emptyList()
+        _deletedItemUrls.value = Event(currentList + url)
     }
+
+    /**
+     * 삭제된 아이템 URL 리스트를 초기화합니다.
+     */
+    fun clearDeletedItemUrls() {
+        _deletedItemUrls.value = Event(emptyList())
+    }
+
+}
+
+/**
+ * 데이터를 한 번만 전달하는데 사용하는 Event 클래스.
+ * 이를 통해 데이터가 이미 처리되었는지 확인하고,
+ * 이미 처리된 경우 다시 그 데이터를 전달하지 않습니다.
+ */
+open class Event<out T>(private val content: T) {
+
+    private var hasBeenHandled = false
+
+    /**
+     * 내용을 반환하고 다시 사용되지 않게 합니다.
+     */
+    fun getContentIfNotHandled(): T? {
+        return if (hasBeenHandled) {
+            null
+        } else {
+            hasBeenHandled = true
+            content
+        }
+    }
+
+    /**
+     * 내용을 반환합니다. 이미 처리되었더라도 반환됩니다.
+     */
+    fun peekContent(): T = content
 }

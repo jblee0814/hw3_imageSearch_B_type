@@ -29,7 +29,8 @@ class SearchFragment : Fragment() {
     val apiServiceInstance = retrofit_client.apiService
 
     private val viewModel: SearchViewModel by viewModels { SearchViewModelFactory(apiServiceInstance) }
-    private val sharedViewModel: SharedViewModel by activityViewModels()
+//    private val sharedViewModel: SharedViewModel by activityViewModels()
+    val sharedViewModel by activityViewModels<SharedViewModel>()
 
     // 검색 상태 변수들
     private var lastQuery = ""
@@ -53,9 +54,13 @@ class SearchFragment : Fragment() {
 
         setupViews(inflater, container) // 뷰 설정 메서드 호출
         setupListeners()                // 리스너 설정 메서드 호출
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         observeViewModel()              // ViewModel 관찰 설정
 
-        return binding.root
     }
 
     // ViewModel에서 데이터 변화를 관찰하는 함수
@@ -70,15 +75,25 @@ class SearchFragment : Fragment() {
             loading = !isLoading
         }
 
-        sharedViewModel.deletedItemUrl.observe(viewLifecycleOwner) { url ->
-            val targetItem = adapter.items.find { it.url == url }
+        sharedViewModel.deletedItemUrls.observe(viewLifecycleOwner) { event ->
+            event.getContentIfNotHandled()?.let { urls ->
+                urls.forEach { url ->
+                    Log.d("SearchFragment", "#jblee sharedViewModel.deletedItemUrl url = $url")
+                    val targetItem = adapter.items.find { it.url == url }
 
-            targetItem?.let {
-                it.isLike = false
-                val itemIndex = adapter.items.indexOf(it)
-                adapter.notifyItemChanged(itemIndex)
+                    targetItem?.let {
+                        it.isLike = false
+                        val itemIndex = adapter.items.indexOf(it)
+                        adapter.notifyItemChanged(itemIndex)
+                    }
+                    // 처리 후 목록을 비워줍니다.
+                    sharedViewModel.clearDeletedItemUrls()
+                }
             }
         }
+
+
+
     }
 
     // 뷰 초기 설정 함수
@@ -92,7 +107,7 @@ class SearchFragment : Fragment() {
 
         binding.rvSearchResult.adapter = adapter
         binding.rvSearchResult.addOnScrollListener(onScrollListener)
-
+        binding.rvSearchResult.itemAnimator = null
         binding.etSearch.setText("")
         binding.pbSearch.visibility = View.GONE
     }
