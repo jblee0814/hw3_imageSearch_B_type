@@ -58,14 +58,14 @@ class SearchViewModel(private val apiService: Retrofit_interface) : ViewModel() 
             ?.enqueue(object : Callback<ImageModel?> {
                 override fun onResponse(call: Call<ImageModel?>, response: Response<ImageModel?>) {
                     response.body()?.meta?.let { meta ->
-                        if (meta.getTotal_count() > 0) {
+                        if (meta.totalCount > 0) {
                             for (document in response.body()!!.documents) {
-                                val title = document.getDisplay_sitename()
-                                val datetime = document.getDatetime()
-                                val url = document.getThumbnail_url()
+                                val title = document.displaySitename
+                                val datetime = document.datetime
+                                val url = document.thumbnailUrl
                                 resItems.add(SearchItemModel(Constants.SEARCH_TYPE_IMAGE, title, datetime, url))
                             }
-                            maxImagePage = meta.getPageable_count()
+                            maxImagePage = meta.pageableCount
                         }
                     }
                     Log.d("SearchViewModel", "#jblee fetchImageResults maxImagePage=$maxImagePage")
@@ -85,14 +85,14 @@ class SearchViewModel(private val apiService: Retrofit_interface) : ViewModel() 
             ?.enqueue(object : Callback<VideoModel?> {
                 override fun onResponse(call: Call<VideoModel?>, response: Response<VideoModel?>) {
                     response.body()?.meta?.let { meta ->
-                        if (meta.getTotal_count() > 0) {
+                        if (meta.totalCount > 0) {
                             for (document in response.body()!!.documents) {
-                                val title = document.getTitle()
-                                val datetime = document.getDatetime()
-                                val url = document.getThumbnail()
+                                val title = document.title
+                                val datetime = document.datetime
+                                val url = document.thumbnail
                                 resItems.add(SearchItemModel(Constants.SEARCH_TYPE_VIDEO, title, datetime, url))
                             }
-                            maxVideoPage = meta.getPageable_count()
+                            maxVideoPage = meta.pageableCount
                         }
                     }
                     isVideoSearchFinished = true
